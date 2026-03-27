@@ -10,7 +10,7 @@ import logging
 import time
 from asyncio import AbstractEventLoop, CancelledError, Lock, Task, shield
 from collections import OrderedDict
-from enum import IntEnum
+from enum import StrEnum
 from functools import wraps
 from typing import Any, Awaitable, Callable, Concatenate, Coroutine, ParamSpec, TypeVar
 
@@ -48,15 +48,15 @@ _SonyDeviceT = TypeVar("_SonyDeviceT", bound="SonyDevice")
 _P = ParamSpec("_P")
 
 
-class Events(IntEnum):
+class Events(StrEnum):
     """Internal driver events."""
 
-    CONNECTING = 0
-    CONNECTED = 1
-    DISCONNECTED = 2
-    ERROR = 3
-    UPDATE = 4
-    # IP_ADDRESS_CHANGED = 6
+    CONNECTING = "CONNECTING"
+    CONNECTED = "CONNECTED"
+    DISCONNECTED = "DISCONNECTED"
+    ERROR = "ERROR"
+    UPDATE = "UPDATE"
+    # IP_ADDRESS_CHANGED = "IP_ADDRESS_CHANGED"
 
 
 SONY_PLAYBACK_STATE_MAPPING = {

@@ -13,6 +13,7 @@ import sys
 from enum import Enum
 from typing import Any, Type
 
+# sys.path.insert(0, os.path.abspath("../integration-python-library"))
 import ucapi
 
 import avr
@@ -82,7 +83,8 @@ async def on_enter_standby() -> None:
 
 def filter_attributes(attributes, attribute_type: Type[Enum]) -> dict[str, Any]:
     """Filter attributes based on an Enum class."""
-    return {k: v for k, v in attributes.items() if k in attribute_type}
+    valid_keys = {e.value for e in attribute_type}
+    return {k: v for k, v in attributes.items() if k in valid_keys}
 
 
 @api.listens_to(ucapi.Events.EXIT_STANDBY)

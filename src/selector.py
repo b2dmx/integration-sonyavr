@@ -76,8 +76,28 @@ class SonySelect(SonyEntity, Select):
             Attributes.STATE: States.ON,
         }
 
-    async def command(self, cmd_id: str, params: dict[str, Any] | None = None, *, websocket: Any) -> StatusCodes:
-        """Process selector command."""
+    async def command(
+        self,
+        cmd_id: str,
+        params: dict[str, Any] | None = None,
+        *,
+        websocket: Any,
+    ) -> StatusCodes:
+        """
+        Execute entity command with the installed command handler.
+
+        Backward compatible:
+        - Existing handlers usually accept (entity, cmd_id, params)
+        - New handlers may optionally accept websocket as kw-only / kwarg
+
+        Returns NOT_IMPLEMENTED if no command handler is installed.
+
+        :param cmd_id: the command
+        :param params: optional command parameters
+        :param websocket: optional websocket connection. Allows for directed event
+                          callbacks instead of broadcasts.
+        :return: command status code to acknowledge to UCR2
+        """
         # pylint: disable=R0911
         if cmd_id == Commands.SELECT_OPTION and params:
             option = params.get("option", None)

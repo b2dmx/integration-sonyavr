@@ -182,7 +182,7 @@ class SonySoundModeSelect(SonySelect):
     """Sound mode selector entity."""
 
     ENTITY_NAME = "sound_mode"
-    SELECT_NAME = SonySelects.SELECT_INPUT_SOURCE
+    SELECT_NAME = SonySelects.SELECT_SOUND_MODE
 
     def __init__(self, device_config: DeviceInstance, device: avr.SonyDevice):
         """Initialize the class."""

@@ -180,7 +180,7 @@ class SonyDevice:
         self._sysinfo: Sysinfo | None = None
         self._volume_control = None
         self._volume_min: float = 0
-        self._volume_max: float = 1
+        self._volume_max: float = 100
         self._volume: float = 0
         self._volume_step = device.volume_step
         self._attr_is_volume_muted = False
@@ -313,7 +313,7 @@ class SonyDevice:
         async def _volume_changed(volume: VolumeChange):
             _LOG.debug("Sony AVR volume changed: %s", volume)
             updated_data = {}
-            new_volume = float(volume.volume - self._volume_min) * 100 / float(self._volume_max - self._volume_min)
+            new_volume = float(volume.volume)  # raw Sony scale (0..maxVolume), not percent
             if self._volume != new_volume:
                 self._volume = new_volume
                 updated_data[MediaAttr.VOLUME] = self.volume_level
@@ -481,7 +481,7 @@ class SonyDevice:
             volume = volumes[0]
             self._volume_max = volume.maxVolume
             self._volume_min = volume.minVolume
-            self._volume = float(volume.volume - self._volume_min) * 100 / float(self._volume_max - self._volume_min)
+            self._volume = float(volume.volume)  # raw Sony scale (0..maxVolume), not percent
             self._volume_control = volume
             self._attr_is_volume_muted = self._volume_control.is_muted
 
@@ -775,9 +775,9 @@ class SonyDevice:
         """Set volume level, range 0..100."""
         if volume is None:
             return ucapi.StatusCodes.BAD_REQUEST
-        volume_sony = volume * (self._volume_max - self._volume_min) / 100 + self._volume_min
+        volume_sony = max(self._volume_min, min(volume, self._volume_max))  # already raw Sony scale
         _LOG.debug("Sony AVR setting volume to %s", volume_sony)
-        self._volume = volume
+        self._volume = volume_sony
         await self._volume_control.set_volume(round(volume_sony))
         self.events.emit(Events.UPDATE, self.id, {MediaAttr.VOLUME: self.volume_level})
         return ucapi.StatusCodes.OK
@@ -785,8 +785,8 @@ class SonyDevice:
     @retry()
     async def volume_up(self) -> ucapi.StatusCodes:
         """Send volume-up command to AVR."""
-        self._volume = min(self._volume + self._volume_step, 100)
-        volume_sony = self._volume * float(self._volume_max - self._volume_min) / 100 + self._volume_min
+        self._volume = min(self._volume + self._volume_step, self._volume_max)
+        volume_sony = self._volume  # already raw Sony scale
         await self._volume_control.set_volume(round(volume_sony))
         self.events.emit(Events.UPDATE, self.id, {MediaAttr.VOLUME: self.volume_level})
         return ucapi.StatusCodes.OK
@@ -794,8 +794,8 @@ class SonyDevice:
     @retry()
     async def volume_down(self) -> ucapi.StatusCodes:
         """Send volume-down command to AVR."""
-        self._volume = max(self._volume - self._volume_step, 0)
-        volume_sony = self._volume * (self._volume_max - self._volume_min) / 100 + self._volume_min
+        self._volume = max(self._volume - self._volume_step, self._volume_min)
+        volume_sony = self._volume  # already raw Sony scale
         await self._volume_control.set_volume(round(volume_sony))
         self.events.emit(Events.UPDATE, self.id, {MediaAttr.VOLUME: self.volume_level})
         return ucapi.StatusCodes.OK

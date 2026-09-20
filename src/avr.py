@@ -779,7 +779,11 @@ class SonyDevice:
         _LOG.debug("Sony AVR setting volume to %s", volume_sony)
         self._volume = volume_sony
         await self._volume_control.set_volume(round(volume_sony))
-        self.events.emit(Events.UPDATE, self.id, {MediaAttr.VOLUME: self.volume_level})
+        self.events.emit(
+            Events.UPDATE,
+            self.id,
+            {MediaAttr.VOLUME: self.volume_level, SonySensors.SENSOR_VOLUME: self.volume_level},
+        )
         return ucapi.StatusCodes.OK
 
     @retry()
@@ -788,7 +792,11 @@ class SonyDevice:
         self._volume = min(self._volume + self._volume_step, self._volume_max)
         volume_sony = self._volume  # already raw Sony scale
         await self._volume_control.set_volume(round(volume_sony))
-        self.events.emit(Events.UPDATE, self.id, {MediaAttr.VOLUME: self.volume_level})
+        self.events.emit(
+            Events.UPDATE,
+            self.id,
+            {MediaAttr.VOLUME: self.volume_level, SonySensors.SENSOR_VOLUME: self.volume_level},
+        )
         return ucapi.StatusCodes.OK
 
     @retry()
@@ -797,7 +805,11 @@ class SonyDevice:
         self._volume = max(self._volume - self._volume_step, self._volume_min)
         volume_sony = self._volume  # already raw Sony scale
         await self._volume_control.set_volume(round(volume_sony))
-        self.events.emit(Events.UPDATE, self.id, {MediaAttr.VOLUME: self.volume_level})
+        self.events.emit(
+            Events.UPDATE,
+            self.id,
+            {MediaAttr.VOLUME: self.volume_level, SonySensors.SENSOR_VOLUME: self.volume_level},
+        )
         return ucapi.StatusCodes.OK
 
     @retry()
@@ -805,7 +817,11 @@ class SonyDevice:
         """Send mute command to AVR."""
         _LOG.debug("Sending mute: %s", muted)
         await self._volume_control.set_mute(muted)
-        self.events.emit(Events.UPDATE, self.id, {MediaAttr.MUTED: muted})
+        self.events.emit(
+            Events.UPDATE,
+            self.id,
+            {MediaAttr.MUTED: muted, SonySensors.SENSOR_MUTED: "on" if muted else "off"},
+        )
         return ucapi.StatusCodes.OK
 
     @retry()

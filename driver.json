@@ -1,6 +1,6 @@
 {
   "driver_id": "sonyavr_driver",
-  "version": "1.7.5-vol1",
+  "version": "1.7.5-vol2",
   "min_core_api": "0.20.0",
   "name": {
     "en": "Sony AVR (raw volume)"

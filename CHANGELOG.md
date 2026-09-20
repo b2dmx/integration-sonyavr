@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Changes in the next release_
 
+### Fixed
+- Sensor entities now update when the volume or mute is changed from the
+  remote. `volume_up`, `volume_down`, `set_volume_level` and `mute` emitted
+  only the media-player attribute, and because they set the volume
+  optimistically the AVR's own `VolumeChange` notification was then a no-op,
+  so the sensors never saw the change.
+
 ---
 
 ## v0.0.1 - 2024-03-16

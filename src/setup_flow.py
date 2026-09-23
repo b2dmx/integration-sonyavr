@@ -364,6 +364,14 @@ async def handle_configuration_mode(
                             }
                         },
                     },
+                    {
+                        "id": "raw_volume",
+                        "label": {
+                            "en": "Show volume as the receiver displays it (e.g. 0-74) instead of a percentage",
+                            "fr": "Afficher le volume comme sur l'ampli (ex. 0-74) plutôt qu'en pourcentage",
+                        },
+                        "field": {"checkbox": {"value": _reconfigured_device.raw_volume}},
+                    },
                 ],
             )
         case "reset":
@@ -475,6 +483,14 @@ async def _handle_discovery(msg: UserDataResponse) -> RequestUserInput | SetupEr
                     }
                 },
             },
+            {
+                "id": "raw_volume",
+                "label": {
+                    "en": "Show volume as the receiver displays it (e.g. 0-74) instead of a percentage",
+                    "fr": "Afficher le volume comme sur l'ampli (ex. 0-74) plutôt qu'en pourcentage",
+                },
+                "field": {"checkbox": {"value": False}},
+            },
         ],
     )
 
@@ -490,6 +506,7 @@ async def handle_device_choice(msg: UserDataResponse) -> SetupComplete | SetupEr
     """
     host = msg.input_values["choice"]
     always_on = msg.input_values.get("always_on") == "true"
+    raw_volume = msg.input_values.get("raw_volume") == "true"
     try:
         volume_step = float(msg.input_values.get("volume_step", 1.0))
         if volume_step < 0.1 or volume_step > 10:
@@ -516,6 +533,7 @@ async def handle_device_choice(msg: UserDataResponse) -> SetupComplete | SetupEr
 
     device.always_on = always_on
     device.volume_step = volume_step
+    device.raw_volume = raw_volume
     config.devices.store()
 
     # AVR device connection will be triggered with subscribe_entities request
@@ -578,11 +596,13 @@ async def _handle_device_reconfigure(msg: UserDataResponse) -> SetupComplete | S
     except ValueError:
         return SetupError(error_type=IntegrationSetupError.OTHER)
     always_on = msg.input_values.get("always_on") == "true"
+    raw_volume = msg.input_values.get("raw_volume") == "true"
 
     _LOG.debug("User has changed configuration")
     _reconfigured_device.address = address
     _reconfigured_device.volume_step = volume_step
     _reconfigured_device.always_on = always_on
+    _reconfigured_device.raw_volume = raw_volume
 
     config.devices.add_or_update(_reconfigured_device)  # triggers ATV instance update
     await asyncio.sleep(1)

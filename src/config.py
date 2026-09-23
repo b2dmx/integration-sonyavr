@@ -65,6 +65,7 @@ class DeviceInstance:
     mac_address_wired: str | None = field(default=None)
     mac_address_wifi: str | None = field(default=None)
     sensor_include_device_name: bool = field(default=True)
+    raw_volume: bool = field(default=False)
 
     def __post_init__(self):
         """Apply default values on missing fields."""
@@ -163,6 +164,7 @@ class Devices:
                 item.name = device.name
                 item.always_on = device.always_on
                 item.volume_step = device.volume_step
+                item.raw_volume = device.raw_volume
                 item.mac_address_wired = device.mac_address_wired
                 item.mac_address_wired = device.mac_address_wired
                 return self.store()
@@ -283,6 +285,7 @@ class Devices:
                     item.get("volume_step", 2.0),
                     item.get("mac_address_wired", None),
                     item.get("mac_address_wifi", None),
+                    raw_volume=item.get("raw_volume", False),
                 )
                 self._config.append(device_instance)
             return True

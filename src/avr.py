@@ -172,6 +172,7 @@ class SonyDevice:
         self._volume_max: float = 1
         self._volume: float = 0
         self._volume_step = device.volume_step
+        self._raw_volume = device.raw_volume
         self._attr_is_volume_muted = False
         self._active_source = None
         self._sources = {}
@@ -304,7 +305,7 @@ class SonyDevice:
             volume = cast("VolumeChange", notification)
             _LOG.debug("Sony AVR volume changed: %s", volume)
             updated_data = {}
-            new_volume = float(volume.volume - self._volume_min) * 100 / float(self._volume_max - self._volume_min)
+            new_volume = self._volume_from_sony(volume.volume)
             if self._volume != new_volume:
                 self._volume = new_volume
                 updated_data[MediaAttr.VOLUME] = self.volume_level
@@ -473,7 +474,7 @@ class SonyDevice:
             volume = volumes[0]
             self._volume_max = volume.maxVolume
             self._volume_min = volume.minVolume
-            self._volume = float(volume.volume - self._volume_min) * 100 / float(self._volume_max - self._volume_min)
+            self._volume = self._volume_from_sony(volume.volume)
             self._volume_control = volume
             self._attr_is_volume_muted = self._volume_control.is_muted
 
@@ -667,8 +668,26 @@ class SonyDevice:
 
     @property
     def volume_level(self) -> int | None:
-        """Volume level of the media player (0..100)."""
+        """Volume level of the media player: 0..100, or the receiver's own scale with raw_volume."""
         return round(self._volume)
+
+    def _volume_from_sony(self, volume_sony: float) -> float:
+        """Convert a receiver volume to the value shown on the remote."""
+        if self._raw_volume:
+            return float(volume_sony)
+        return float(volume_sony - self._volume_min) * 100 / float(self._volume_max - self._volume_min)
+
+    def _volume_to_sony(self, volume: float) -> float:
+        """Convert a value shown on the remote to a receiver volume."""
+        if self._raw_volume:
+            return volume
+        return volume * (self._volume_max - self._volume_min) / 100 + self._volume_min
+
+    def _clamp_volume(self, volume: float) -> float:
+        """Keep a volume inside the range shown on the remote."""
+        if self._raw_volume:
+            return max(self._volume_min, min(volume, self._volume_max))
+        return max(0, min(volume, 100))
 
     @property
     def sound_mode_list(self) -> list[str]:
@@ -741,6 +760,7 @@ class SonyDevice:
             return ucapi.StatusCodes.BAD_REQUEST
 
         await self._cancel_volume_debounce()
+        volume = self._clamp_volume(volume)
         self._volume = volume
         self.events.emit(Events.UPDATE, self.id, {MediaAttr.VOLUME: self.volume_level})
         self._volume_debounce_task = self.event_loop.create_task(self._debounced_set_volume_level(volume))
@@ -772,7 +792,7 @@ class SonyDevice:
         """Send an absolute volume level to the receiver."""
         if self._volume_control is None:
             return ucapi.StatusCodes.SERVICE_UNAVAILABLE
-        volume_sony = volume * (self._volume_max - self._volume_min) / 100 + self._volume_min
+        volume_sony = self._volume_to_sony(volume)
         _LOG.debug("Sony AVR setting volume to %s", volume_sony)
         await self._volume_control.set_volume(round(volume_sony))
         return ucapi.StatusCodes.OK
@@ -783,8 +803,8 @@ class SonyDevice:
         if self._volume_control is None:
             return ucapi.StatusCodes.SERVICE_UNAVAILABLE
         await self._cancel_volume_debounce()
-        self._volume = min(self._volume + self._volume_step, 100)
-        volume_sony = self._volume * float(self._volume_max - self._volume_min) / 100 + self._volume_min
+        self._volume = self._clamp_volume(self._volume + self._volume_step)
+        volume_sony = self._volume_to_sony(self._volume)
         await self._volume_control.set_volume(round(volume_sony))
         self.events.emit(Events.UPDATE, self.id, {MediaAttr.VOLUME: self.volume_level})
         return ucapi.StatusCodes.OK
@@ -795,8 +815,8 @@ class SonyDevice:
         if self._volume_control is None:
             return ucapi.StatusCodes.SERVICE_UNAVAILABLE
         await self._cancel_volume_debounce()
-        self._volume = max(self._volume - self._volume_step, 0)
-        volume_sony = self._volume * (self._volume_max - self._volume_min) / 100 + self._volume_min
+        self._volume = self._clamp_volume(self._volume - self._volume_step)
+        volume_sony = self._volume_to_sony(self._volume)
         await self._volume_control.set_volume(round(volume_sony))
         self.events.emit(Events.UPDATE, self.id, {MediaAttr.VOLUME: self.volume_level})
         return ucapi.StatusCodes.OK

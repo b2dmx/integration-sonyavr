@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _Changes in the next release_
 
+### Added
+- Optional setting to show the volume on the receiver's own scale (for example
+  0-74 on an STR-AN1000) instead of a percentage, so the number on the remote
+  matches the receiver's display. Off by default; existing setups are unchanged.
+  The scale comes from the receiver's reported minimum and maximum, and the
+  volume step is applied in the same units.
+
 ---
 
 ## v0.0.1 - 2024-03-16

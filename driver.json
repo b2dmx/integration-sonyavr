@@ -1,9 +1,9 @@
 {
   "driver_id": "sonyavr_driver",
-  "version": "1.9.0",
+  "version": "1.9.0-b2dmx1",
   "min_core_api": "0.20.0",
   "name": {
-    "en": "Sony AVR Network Receivers"
+    "en": "Sony AVR (b2dmx build)"
   },
   "icon": "custom:sony.png",
   "description": {

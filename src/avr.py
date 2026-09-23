@@ -762,7 +762,11 @@ class SonyDevice:
         await self._cancel_volume_debounce()
         volume = self._clamp_volume(volume)
         self._volume = volume
-        self.events.emit(Events.UPDATE, self.id, {MediaAttr.VOLUME: self.volume_level})
+        self.events.emit(
+            Events.UPDATE,
+            self.id,
+            {MediaAttr.VOLUME: self.volume_level, SonySensors.SENSOR_VOLUME: self.volume_level},
+        )
         self._volume_debounce_task = self.event_loop.create_task(self._debounced_set_volume_level(volume))
         return ucapi.StatusCodes.OK
 
@@ -806,7 +810,11 @@ class SonyDevice:
         self._volume = self._clamp_volume(self._volume + self._volume_step)
         volume_sony = self._volume_to_sony(self._volume)
         await self._volume_control.set_volume(round(volume_sony))
-        self.events.emit(Events.UPDATE, self.id, {MediaAttr.VOLUME: self.volume_level})
+        self.events.emit(
+            Events.UPDATE,
+            self.id,
+            {MediaAttr.VOLUME: self.volume_level, SonySensors.SENSOR_VOLUME: self.volume_level},
+        )
         return ucapi.StatusCodes.OK
 
     @retry()
@@ -818,7 +826,11 @@ class SonyDevice:
         self._volume = self._clamp_volume(self._volume - self._volume_step)
         volume_sony = self._volume_to_sony(self._volume)
         await self._volume_control.set_volume(round(volume_sony))
-        self.events.emit(Events.UPDATE, self.id, {MediaAttr.VOLUME: self.volume_level})
+        self.events.emit(
+            Events.UPDATE,
+            self.id,
+            {MediaAttr.VOLUME: self.volume_level, SonySensors.SENSOR_VOLUME: self.volume_level},
+        )
         return ucapi.StatusCodes.OK
 
     @retry()
@@ -828,7 +840,11 @@ class SonyDevice:
             return ucapi.StatusCodes.SERVICE_UNAVAILABLE
         _LOG.debug("Sending mute: %s", muted)
         await self._volume_control.set_mute(muted)
-        self.events.emit(Events.UPDATE, self.id, {MediaAttr.MUTED: muted})
+        self.events.emit(
+            Events.UPDATE,
+            self.id,
+            {MediaAttr.MUTED: muted, SonySensors.SENSOR_MUTED: "on" if muted else "off"},
+        )
         return ucapi.StatusCodes.OK
 
     @retry()
